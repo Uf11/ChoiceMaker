@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChoiceMaker DApp</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- User Authentication Section -->
+        <div id="userAuthSection">
+            <h2>User Authentication</h2>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username">
+            </div>
+            <div class="form-group">
+                <label for="companyId">Company ID:</label>
+                <input type="number" class="form-control" id="companyId">
+            </div>
+            <button class="btn btn-primary" id="signupBtn">Sign Up</button>
+            <button class="btn btn-primary" id="loginBtn">Log In</button>
+        </div>
+        <!-- Poll Section -->
+        <div id="pollSection" style="display:none">
+            <h2>Poll Creation</h2>
+            <div class="form-group">
+                <label for="question">Question:</label>
+                <input type="text" class="form-control" id="question">
+            </div>
+            <div class="form-group">
+                <label for="option1">Option 1:</label>
+                <input type="text" class="form-control" id="option1">
+            </div>
+            <div class="form-group">
+                <label for="option2">Option 2:</label>
+                <input type="text" class="form-control" id="option2">
+            </div>
+            <button class="btn btn-primary" id="createPollBtn">Create Poll</button>
+            <hr>
+            <h2>Poll Voting</h2>
+            <div class="form-group">
+                <label for="pollSelect">Select Poll:</label>
+                <select class="form-control" id="pollSelect"></select>
+            </div>
+            <div class="form-group">
+                <label for="voteOptions">Select Option:</label>
+                <select class="form-control" id="voteOptions"></select>
+            </div>
+            <button class="btn btn-primary" id="voteBtn">Vote</button>
+            <hr>
+            <h2>Poll Management</h2>
+            <div class="form-group">
+                <label for="pollManagementSelect">Select Poll:</label>
+                <select class="form-control" id="pollManagementSelect"></select>
+            </div>
+            <button class="btn btn-danger" id="finishPollBtn">Finish Poll</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/web3.min.js"></script>
+    <script src="js/truffle-contract.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
