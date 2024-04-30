@@ -94,7 +94,7 @@ async function login() {
 }
 
 async function createPoll() {
-    try {
+    // try {
         const question = document.getElementById('question').value;
         const option1 = document.getElementById('option1').value;
         const option2 = document.getElementById('option2').value;
@@ -108,19 +108,19 @@ async function createPoll() {
         await App.contracts.Poll.deployed().then(async function (instance) {
             // Call the createPoll function of the Poll contract
             await instance.createPoll(question, { from: ethereum.selectedAddress });
-            const pollId = await instance.pollCount();
-            console.log('Poll created with ID:', pollId, option1, option2);
+            const pollId = await instance.pollCount().then(count => count.toNumber());
+            console.log('Poll created with ID:', pollId);
 
             // Add options to the latest poll
-            const addOption1Tx = await instance.addOption(pollId, option1);
-            console.log('Option 1 added to poll with ID:', pollId);
+            await instance.addOption(pollId, option1, { from: ethereum.selectedAddress });
+            console.log('Option 1 added to poll with ID:', pollId );
 
-            const addOption2Tx = await instance.addOption(pollId, option2);
+            await instance.addOption(pollId, option2, { from: ethereum.selectedAddress });
             console.log('Option 2 added to poll with ID:', pollId);
         });
-    } catch (err) {
-        console.error('Error creating poll:', err);
-    }
+    // } catch (err) {
+    //     console.error('Error creating poll:', err);
+    // }
     await fetchAndDisplayPolls();
 }
 
@@ -131,7 +131,7 @@ async function fetchAndDisplayPolls() {
 
     // Fetch the number of polls
     await App.contracts.Poll.deployed().then(async function (instance) {
-        const pollCount = await instance.pollCount();
+        const pollCount = await instance.pollCount().then(count => count.toNumber());
         // Loop through each poll and add it to the select options
         for (let i = 1; i <= pollCount; i++) {
             const poll = await instance.polls(i);
