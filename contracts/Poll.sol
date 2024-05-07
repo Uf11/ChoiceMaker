@@ -5,35 +5,29 @@ contract Poll {
         address creator;
         string question;
         string[] options;
-        mapping(address => uint256) votes; // Changed uint to uint256
+        mapping(address => uint256) votes;
         bool finished;
     }
 
-    mapping(uint256 => PollData) public polls; // Changed uint to uint256
-    uint256 public pollCount; // Changed uint to uint256
+    mapping(uint256 => PollData) public polls;
+    uint256 public pollCount;
 
-    event PollCreated(uint256 indexed pollId, string question); // Changed uint to uint256
-    event PollOptionAdded(uint256 indexed pollId, string option); // Changed uint to uint256
-    event PollFinished(uint256 indexed pollId, string question, uint256[] results); // Changed uint to uint256
+    event PollCreated(uint256 indexed pollId, string question, string[] options); 
+    event PollOptionAdded(uint256 indexed pollId, string option); 
+    event PollFinished(uint256 indexed pollId, string question, uint256[] results); 
 
-    function createPoll(string memory _question) public {
+    function createPoll(string memory _question, string[] memory _options) public {
         require(bytes(_question).length > 0, "Question cannot be empty");
+        emit PollCreated(pollCount, _question, _options);
 
         pollCount++;
         polls[pollCount].creator = msg.sender;
         polls[pollCount].question = _question;
-        emit PollCreated(pollCount, _question);
+        polls[pollCount].options = _options;
+        emit PollCreated(pollCount, _question, _options);
     }
 
-    function addOption(uint256 _pollId, string memory _option) public { // Changed uint to uint256
-        require(_pollId > 0 && _pollId <= pollCount, "Invalid poll ID");
-        require(bytes(_option).length > 0, "Option cannot be empty");
-
-        polls[_pollId].options.push(_option);
-        emit PollOptionAdded(_pollId, _option);
-    }
-
-    function vote(uint256 _pollId, uint256 _optionIndex) public { // Changed uint to uint256
+    function vote(uint256 _pollId, uint256 _optionIndex) public { 
         require(_pollId > 0 && _pollId <= pollCount, "Invalid poll ID");
         require(_optionIndex < polls[_pollId].options.length, "Invalid option index"); // Removed check for _optionIndex >= 0
         require(polls[_pollId].votes[msg.sender] == 0, "Already voted");
@@ -41,12 +35,12 @@ contract Poll {
         polls[_pollId].votes[msg.sender] = _optionIndex + 1;
     }
 
-    function getPollOptions(uint256 _pollId) public view returns (string[] memory) { // Changed uint to uint256
+    function getPollOptions(uint256 _pollId) public view returns (string[] memory) { 
         require(_pollId > 0 && _pollId <= pollCount, "Invalid poll ID");
         return polls[_pollId].options;
     }
 
-    function finishPoll(uint256 _pollId) public { // Changed uint to uint256
+    function finishPoll(uint256 _pollId) public { 
         require(_pollId > 0 && _pollId <= pollCount, "Invalid poll ID");
         require(msg.sender == polls[_pollId].creator, "Only the creator can finish the poll");
 

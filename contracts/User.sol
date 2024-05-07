@@ -4,15 +4,15 @@ contract User {
     struct UserData {
         string username;
         address userAddress;
-        uint256 companyId; // Changed uint to uint256
+        uint256 companyId; 
     }
 
     mapping(address => UserData) public users;
-    mapping(uint256 => string) public companies; // Changed uint to uint256
-    uint256 public companyCount; // Changed uint to uint256
+    mapping(uint256 => string) public companies; 
+    uint256 public companyCount; 
 
-    event UserCreated(address indexed userAddress, string username, uint256 companyId); // Changed uint to uint256
-    event UserLoggedIn(address indexed userAddress, string username, uint256 companyId); // Changed uint to uint256
+    event UserCreated(address indexed userAddress, string username, uint256 companyId); 
+    event UserLoggedIn(address indexed userAddress, string username, uint256 companyId); 
 
     function signUp(string memory _username, uint256 _companyId) public {
         require(bytes(_username).length > 0, "Username cannot be empty");
@@ -30,7 +30,7 @@ contract User {
         emit UserCreated(msg.sender, _username, _companyId);
     }
 
-    function getUserByAddress() public view returns (string memory username, uint256 companyId) { // Changed uint to uint256
+    function getUserByAddress() public view returns (string memory username, uint256 companyId) { 
         UserData memory user = users[msg.sender];
         return (user.username, user.companyId);
     }

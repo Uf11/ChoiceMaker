@@ -113,16 +113,19 @@ async function createPoll() {
         // Obtain the contract instance using Truffle's contract abstraction
         await App.contracts.Poll.deployed().then(async function (instance) {
             // Call the createPoll function of the Poll contract
-            await instance.createPoll(question, { from: ethereum.selectedAddress });
+            console.log(typeof option1, typeof option2)
+            let options = [option1, option2];
+            console.log('Creating poll with question:', question, 'and options:', options);
+            await instance.createPoll(question, options, { from: ethereum.selectedAddress, gas: 3000000 });
             const pollId = await instance.pollCount().then(count => count.toNumber());
             console.log('Poll created with ID:', pollId);
 
-            // Add options to the latest poll
-            await instance.addOption(pollId, option1, { from: ethereum.selectedAddress });
-            console.log('Option 1 added to poll with ID:', pollId );
+            // // Add options to the latest poll
+            // await instance.addOption(pollId, option1, { from: ethereum.selectedAddress });
+            // console.log('Option 1 added to poll with ID:', pollId );
 
-            await instance.addOption(pollId, option2, { from: ethereum.selectedAddress });
-            console.log('Option 2 added to poll with ID:', pollId);
+            // await instance.addOption(pollId, option2, { from: ethereum.selectedAddress });
+            // console.log('Option 2 added to poll with ID:', pollId);
         });
     } catch (err) {
         console.error('Error creating poll:', err);
@@ -134,6 +137,10 @@ async function fetchAndDisplayPolls() {
     // Fetch and display polls
     const pollSelect = document.getElementById('pollSelect');
     pollSelect.innerHTML = '';
+    pollSelect.addEventListener('change', async function (event) {
+        const pollId = event.target.value;
+        await fetchAndDisplayPollOptions(pollId);
+    });
 
     // Fetch the number of polls
     await App.contracts.Poll.deployed().then(async function (instance) {
@@ -151,23 +158,31 @@ async function fetchAndDisplayPolls() {
             option.value = i;
             pollSelect.add(option);
         }
-        const pollId = pollSelect.options[pollSelect.selectedIndex].value;
-        const pollOptions = await instance.getPollOptions(pollId);
-
-        const voteOptions = document.getElementById('voteOptions');
-        console.log('Poll options:', pollOptions);
-
-        voteOptions.innerHTML = '';
-
-        pollOptions.forEach((option, index) => {
-            const optionElement = document.createElement('option');
-            optionElement.text = option;
-            optionElement.value = index;
-            voteOptions.add(optionElement);
-        });
+        
     })
     .catch(function (err) {
         console.error('Error fetching and displaying polls:', err);
+    });
+}
+
+async function fetchAndDisplayPollOptions( pollId ) {
+    // Fetch and display poll options
+    const voteOptions = document.getElementById('voteOptions');
+    voteOptions.innerHTML = '';
+
+    // Fetch the number of options for the selected poll
+    await App.contracts.Poll.deployed().then(async function (instance) {
+        const options = await instance.getPollOptions(pollId)
+        // Loop through each option and add it to the select options
+        console.log('Options:', options);
+        for (let i = 0; i < options.length; i++) {
+            const option = document.createElement('option');
+            option.text = options[i];
+            option.value = i;
+            voteOptions.add(option);
+        }
+    }).catch(function (err) {
+        console.error('Error fetching and displaying poll options:', err);
     });
 }
 
