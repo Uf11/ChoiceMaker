@@ -71,10 +71,15 @@ async function login() {
 
     // Check if the user exists
     await App.contracts.User.deployed().then(async function (instance) {
-        const userAddress = await instance.getUserByUsername(username);
-        if (userAddress !== '0x0000000000000000000000000000000000000000') {
-            // Set the selected address
-            ethereum.selectedAddress = userAddress;
+        const data = await instance.getUserByAddress({ from: ethereum.selectedAddress });
+        console.log('Data:', data);
+        const username = data[0];
+        const companyId = parseInt(data[1].toString());
+        console.log('Returned username:', username); // Log the returned username
+
+        if (username !== '' && username !== undefined) {
+
+            console.log('User logged in:', username, companyId, ethereum.selectedAddress);
 
             // Hide user authentication section
             document.getElementById('userAuthSection').style.display = 'none';
@@ -88,13 +93,14 @@ async function login() {
             // Display an error message
             console.error('User does not exist. Please sign up first.');
         }
-    }).catch(function (err) {
+    })
+    .catch(function (err) {
         console.error('Error logging in:', err);
     });
 }
 
 async function createPoll() {
-    // try {
+    try {
         const question = document.getElementById('question').value;
         const option1 = document.getElementById('option1').value;
         const option2 = document.getElementById('option2').value;
@@ -118,9 +124,9 @@ async function createPoll() {
             await instance.addOption(pollId, option2, { from: ethereum.selectedAddress });
             console.log('Option 2 added to poll with ID:', pollId);
         });
-    // } catch (err) {
-    //     console.error('Error creating poll:', err);
-    // }
+    } catch (err) {
+        console.error('Error creating poll:', err);
+    }
     await fetchAndDisplayPolls();
 }
 
@@ -135,12 +141,32 @@ async function fetchAndDisplayPolls() {
         // Loop through each poll and add it to the select options
         for (let i = 1; i <= pollCount; i++) {
             const poll = await instance.polls(i);
+            if(poll == undefined && i == 1){
+                console.log('No polls found');
+                return;
+            }
+            console.log('Poll:', poll);
             const option = document.createElement('option');
-            option.text = poll.question;
+            option.text = poll[1];
             option.value = i;
             pollSelect.add(option);
         }
-    }).catch(function (err) {
+        const pollId = pollSelect.options[pollSelect.selectedIndex].value;
+        const pollOptions = await instance.getPollOptions(pollId);
+
+        const voteOptions = document.getElementById('voteOptions');
+        console.log('Poll options:', pollOptions);
+
+        voteOptions.innerHTML = '';
+
+        pollOptions.forEach((option, index) => {
+            const optionElement = document.createElement('option');
+            optionElement.text = option;
+            optionElement.value = index;
+            voteOptions.add(optionElement);
+        });
+    })
+    .catch(function (err) {
         console.error('Error fetching and displaying polls:', err);
     });
 }

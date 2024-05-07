@@ -10,5 +10,17 @@ module.exports = {
     develop: {
       port: 8545
     }
+  },
+
+  compilers: {
+    solc: {
+      version: "0.8.0", // Specify the desired Solidity version here
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 200
+        }
+      }
+    }
   }
 };
