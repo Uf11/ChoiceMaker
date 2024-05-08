@@ -19,10 +19,11 @@ contract Poll {
     event PollVoted(uint256 indexed pollId, address voter, uint256 optionIndex);
     event PollFinished(uint256 indexed pollId, string question); 
 
-    function createPoll(string memory _question) public {
+    function createPoll(string memory _question, uint256 _companyId) public {
         pollCount++;
         polls[pollCount].creator = msg.sender;
         polls[pollCount].question = _question;
+        polls[pollCount].companyId = _companyId;
         emit PollCreated(pollCount, _question);
     }
 
@@ -37,10 +38,11 @@ contract Poll {
         emit PollOptionAdded(_pollId, _option, polls[_pollId].options[lastIndex]);
     }
 
-    function vote(uint256 _pollId, uint256 _optionIndex) public { 
+    function vote(uint256 _pollId, uint256 _optionIndex, uint256 _companyId) public { 
         require(_pollId > 0 && _pollId <= pollCount, "Invalid poll ID");
         require(_optionIndex < polls[_pollId].options.length, "Invalid option index"); // Removed check for _optionIndex >= 0
         require(polls[_pollId].voters[msg.sender] == 0, "You have already voted");
+        require(polls[_pollId].companyId == _companyId, "You are from different Company");
 
         polls[_pollId].voters[msg.sender] = _optionIndex + 1;
         polls[_pollId].votes[_optionIndex]++;

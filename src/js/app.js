@@ -36,7 +36,8 @@ App = {
     },
 };
 
-let username, companyID;
+let username, companyId;
+
 
 // Event listeners
 function addEventListeners() {
@@ -46,12 +47,49 @@ function addEventListeners() {
     document.getElementById('voteBtn').addEventListener('click', vote);
     document.getElementById('finishPollBtn').addEventListener('click', finishPoll);
     document.getElementById('pollResultBtn').addEventListener('click', fetchPollResults);
+    document.getElementById('companyId').addEventListener('input', companyCheck);
+    document.getElementById('pollManagementSelect').addEventListener('change', async function (event) {
+        const pollId = event.target.value;
+        await checkPollOwner(pollId);
+    });
+}
+
+async function checkPollOwner(pollId) {
+    if(pollId == undefined){
+        return;
+    }
+    await App.contracts.Poll.deployed().then(async function (instance) {
+        // Call the createPoll function of the Poll contract
+        const poll = await instance.polls(pollId);
+        if(poll[0] != ethereum.selectedAddress){
+            document.getElementById('finishPollBtn').style.display = 'none';
+        }else{
+            document.getElementById('finishPollBtn').style.display = 'block';
+        }
+    }).catch(function (err){
+        console.error('Error checking poll owner:', err);
+    })
+}
+
+async function companyCheck(e) {
+    await App.contracts.User.deployed().then(async function (instance) {
+        const companyExist = await instance.checkCompanyExist(parseInt(e.target.value));
+        console.log('Company:', companyExist);
+        const companyStatus = document.getElementById('companyInfo');
+        if (companyExist == true) {
+            companyStatus.innerHTML = "Company ID exists! You Will be joining this company. ";
+        } else {
+            companyStatus.innerHTML = 'You are creating a new company. ';
+        }
+    }).catch(function (err) {
+        console.error('Error checking company:', err);
+    });
 }
 
 // Functions
 async function signUp() {
     username = document.getElementById('username').value;
-    if(document.getElementById('companyId').value == ''){
+    if (document.getElementById('companyId').value == '') {
         // generate alert
         alert('Please enter a valid company ID');
         return;
@@ -97,9 +135,9 @@ async function login() {
             console.error('User does not exist. Please sign up first.');
         }
     })
-    .catch(function (err) {
-        console.error('Error logging in:', err);
-    });
+        .catch(function (err) {
+            console.error('Error logging in:', err);
+        });
 }
 
 async function createPoll() {
@@ -117,9 +155,9 @@ async function createPoll() {
         await App.contracts.Poll.deployed().then(async function (instance) {
             // Call the createPoll function of the Poll contract
             const options = [option1, option2];
-            console.log('Creating poll with question:', question, 'and options:', options);
-            await instance.createPoll(question, { from: ethereum.selectedAddress });
-            
+            console.log('Creating poll with question:', question, 'and options:', options, ' company:', companyId);
+            await instance.createPoll(question, companyId, { from: ethereum.selectedAddress });
+
             const pollId = await instance.pollCount().then(count => count.toNumber());
             console.log('Poll created with ID:', pollId);
 
@@ -128,10 +166,10 @@ async function createPoll() {
                 await instance.addPollOption(pollId, options[i], { from: ethereum.selectedAddress });
             }
 
-            document.getElementById('question').innerHTML = '';
-            document.getElementById('option1').innerHTML = '';
-            document.getElementById('option2').innerHTML = '';
-            
+            document.getElementById('question').value = '';
+            document.getElementById('option1').value = '';
+            document.getElementById('option2').value = '';
+
         });
     } catch (err) {
         console.error('Error creating poll:', err);
@@ -161,15 +199,18 @@ async function fetchAndDisplayPolls() {
         // Loop through each poll and add it to the select options
         for (let i = 1; i <= pollCount; i++) {
             const poll = await instance.polls(i);
-            if(poll == undefined && i == 1){
+            if (poll == undefined && i == 1) {
                 console.log('No polls found');
                 return;
             }
             console.log('Poll:', poll);
+            if (poll[2].toNumber() != companyId) {
+                continue;
+            }
             const option = document.createElement('option');
             option.text = poll[1];
             option.value = i;
-            if(poll[3]==true){
+            if (poll[3] == true) {
                 pollResultSelect.add(option);
                 continue;
             }
@@ -177,21 +218,24 @@ async function fetchAndDisplayPolls() {
             pollManagementSelect.add(option.cloneNode(true));
         }
         // fetch options for the first poll
-        if(pollSelect.options.length > 0){
+        if (pollSelect.options.length > 0) {
             await fetchAndDisplayPollOptions(pollSelect.options[0].value);
         }
-        else{
+        if(pollManagementSelect.options.length > 0){
+            await checkPollOwner(pollManagementSelect.options[0].value);
+        }
+        else {
             const voteOptions = document.getElementById('voteOptions');
             voteOptions.innerHTML = '';
         }
     })
-    .catch(function (err) {
-        console.error('Error fetching and displaying polls:', err);
-    });
+        .catch(function (err) {
+            console.error('Error fetching and displaying polls:', err);
+        });
 }
 
-async function fetchAndDisplayPollOptions( pollId ) {
-    if(pollId == undefined){
+async function fetchAndDisplayPollOptions(pollId) {
+    if (pollId == undefined) {
         return;
     }
     // Fetch and display poll options
@@ -219,7 +263,7 @@ async function vote() {
     const selectedOptionIndex = document.getElementById('voteOptions').value;
     // Call the vote function in the poll contract
     await App.contracts.Poll.deployed().then(async function (instance) {
-        await instance.vote(pollId, selectedOptionIndex, { from: ethereum.selectedAddress });
+        await instance.vote(pollId, selectedOptionIndex, companyId, { from: ethereum.selectedAddress });
     }).catch(function (err) {
         console.error('Error voting:', err);
     });
@@ -244,12 +288,12 @@ async function fetchPollResults() {
     const pollId = document.getElementById('pollResultSelect').value;
     // Call the getPollResults function in the poll contract
     await App.contracts.Poll.deployed().then(async function (instance) {
-        
+
         const poll = await instance.polls(pollId);
         const question = poll[1]
 
         $("#pollResults").append("<h3>" + "Question: " + question + ".</h3>");
-        for(let i = 0; i < 2; i++){
+        for (let i = 0; i < 2; i++) {
             const result = await instance.getPollResults(pollId, i);
             const optionFromChain = await instance.getPollOption(pollId, i);
             $("#pollResults").append("<p> Option " + i + ": " + optionFromChain + " has " + result + " votes.</p>");
