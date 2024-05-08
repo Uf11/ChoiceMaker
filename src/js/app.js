@@ -50,11 +50,12 @@ async function signUp() {
     const username = document.getElementById('username').value;
     const companyId = parseInt(document.getElementById('companyId').value) || 0;
 
+    await ethereum.enable();
+
     // Call the sign up function in the user contract
     await App.contracts.User.deployed().then(async function (instance) {
         console.log('Signing up user:', username, companyId, ethereum.selectedAddress);
         await instance.signUp(username, companyId, { from: ethereum.selectedAddress });
-
         // Hide user authentication section, show poll section
         document.getElementById('userAuthSection').style.display = 'none';
         document.getElementById('pollSection').style.display = 'block';
@@ -66,9 +67,7 @@ async function signUp() {
 }
 
 async function login() {
-    // Login logic
-    const username = document.getElementById('username').value;
-
+    await ethereum.enable();
     // Check if the user exists
     await App.contracts.User.deployed().then(async function (instance) {
         const data = await instance.getUserByAddress({ from: ethereum.selectedAddress });
@@ -78,15 +77,11 @@ async function login() {
         console.log('Returned username:', username); // Log the returned username
 
         if (username !== '' && username !== undefined) {
-
             console.log('User logged in:', username, companyId, ethereum.selectedAddress);
-
             // Hide user authentication section
             document.getElementById('userAuthSection').style.display = 'none';
-
             // Fetch and display the list of polls for voting
             await fetchAndDisplayPolls();
-
             // Show the poll section for voting
             document.getElementById('pollSection').style.display = 'block';
         } else {
@@ -113,19 +108,17 @@ async function createPoll() {
         // Obtain the contract instance using Truffle's contract abstraction
         await App.contracts.Poll.deployed().then(async function (instance) {
             // Call the createPoll function of the Poll contract
-            console.log(typeof option1, typeof option2)
-            let options = [option1, option2];
+            const options = [option1, option2];
             console.log('Creating poll with question:', question, 'and options:', options);
-            await instance.createPoll(question, options, { from: ethereum.selectedAddress, gas: 3000000 });
+            await instance.createPoll(question, { from: ethereum.selectedAddress });
+            
             const pollId = await instance.pollCount().then(count => count.toNumber());
             console.log('Poll created with ID:', pollId);
 
-            // // Add options to the latest poll
-            // await instance.addOption(pollId, option1, { from: ethereum.selectedAddress });
-            // console.log('Option 1 added to poll with ID:', pollId );
-
-            // await instance.addOption(pollId, option2, { from: ethereum.selectedAddress });
-            // console.log('Option 2 added to poll with ID:', pollId);
+            // Add the options to the poll
+            for (let i = 0; i < options.length; i++) {
+                await instance.addPollOption(pollId, options[i], { from: ethereum.selectedAddress });
+            }
         });
     } catch (err) {
         console.error('Error creating poll:', err);
@@ -158,6 +151,8 @@ async function fetchAndDisplayPolls() {
             option.value = i;
             pollSelect.add(option);
         }
+        // fetch options for the first poll
+        await fetchAndDisplayPollOptions(pollSelect.options[0].value)
         
     })
     .catch(function (err) {
@@ -174,7 +169,7 @@ async function fetchAndDisplayPollOptions( pollId ) {
     await App.contracts.Poll.deployed().then(async function (instance) {
         const options = await instance.getPollOptions(pollId)
         // Loop through each option and add it to the select options
-        console.log('Options:', options);
+        console.log('Options:', options, pollId);
         for (let i = 0; i < options.length; i++) {
             const option = document.createElement('option');
             option.text = options[i];
