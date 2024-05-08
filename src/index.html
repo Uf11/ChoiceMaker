@@ -9,6 +9,7 @@
 <body>
     <div class="container">
         <!-- User Authentication Section -->
+        <div id="userInfo"></div>
         <div id="userAuthSection">
             <h2>User Authentication</h2>
             <div class="form-group">
@@ -56,6 +57,14 @@
                 <select class="form-control" id="pollManagementSelect"></select>
             </div>
             <button class="btn btn-danger" id="finishPollBtn">Finish Poll</button>
+            <h2>Poll Results</h2>
+            <div class="form-group">
+                <label for="pollResultSelect">Select Poll:</label>
+                <select class="form-control" id="pollResultSelect"></select>
+            </div>
+            <button class="btn btn-danger" id="pollResultBtn">Get Result</button>
+            <label for="pollResults">Results</label>
+            <div id="pollResults"></div>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
